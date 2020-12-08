@@ -10,9 +10,12 @@ use std::{
     net::SocketAddr,
     pin::Pin,
     task::{Context, Poll},
+    sync::{Arc, RwLock},
     time::Duration,
 };
 use tokio::io::{AsyncRead, AsyncWrite};
+use crate::transport::tls::Certificate;
+use tokio_rustls::rustls::Session;
 
 #[cfg_attr(not(feature = "tls"), allow(unused_variables))]
 pub(crate) fn tcp_incoming<IO, IE>(
@@ -72,6 +75,7 @@ impl Stream for TcpIncoming {
 #[cfg(feature = "tls")]
 pub(crate) struct TlsStream<IO> {
     state: State<IO>,
+    peer_certs: Arc<RwLock<Option<Vec<Certificate>>>>,
 }
 
 #[cfg(feature = "tls")]
@@ -85,6 +89,7 @@ impl<IO> TlsStream<IO> {
     pub(crate) fn new(accept: tokio_rustls::Accept<IO>) -> Self {
         TlsStream {
             state: State::Handshaking(accept),
+            peer_certs: Arc::new(RwLock::new(None)),
         }
     }
 
@@ -94,6 +99,29 @@ impl<IO> TlsStream<IO> {
         } else {
             None
         }
+    }
+
+    fn try_update_cert(&mut self) {
+        eprintln!("try update cert");
+        let mut peer_certs_global = self.peer_certs.write()
+            .expect("poisoned rwlock");
+
+        if peer_certs_global.is_some() {
+            return;
+        }
+
+        match self.state {
+            State::Streaming(ref tls) => {
+                *peer_certs_global = tls.get_ref().1.get_peer_certificates().map(|v|v.into_iter()
+                    .map(|c| Certificate::from_pem(c.0))
+                    .collect());
+            },
+            _ => unreachable!()
+        };
+    }
+
+    pub(crate) fn get_peer_certificates_global(&self) -> Arc<RwLock<Option<Vec<Certificate>>>> {
+        self.peer_certs.clone()
     }
 }
 
@@ -116,6 +144,7 @@ where
                     Ok(mut stream) => {
                         let result = Pin::new(&mut stream).poll_read(cx, buf);
                         pin.state = State::Streaming(stream);
+                        pin.try_update_cert();
                         result
                     }
                     Err(err) => Poll::Ready(Err(err)),
@@ -145,6 +174,7 @@ where
                     Ok(mut stream) => {
                         let result = Pin::new(&mut stream).poll_write(cx, buf);
                         pin.state = State::Streaming(stream);
+                        pin.try_update_cert();
                         result
                     }
                     Err(err) => Poll::Ready(Err(err)),

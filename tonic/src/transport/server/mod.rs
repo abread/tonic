@@ -548,6 +548,7 @@ where
         let conn_info = crate::request::ConnectionInfo {
             remote_addr: io.remote_addr(),
             peer_certs: io.peer_certs().map(Arc::new),
+            peer_certs_global: io.peer_certs_global(),
         };
 
         let svc = self.inner.clone();

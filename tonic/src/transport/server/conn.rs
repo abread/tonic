@@ -7,6 +7,8 @@ use tokio::net::TcpStream;
 #[cfg(feature = "tls")]
 use tokio_rustls::rustls::Session;
 
+use std::sync::{Arc, RwLock};
+
 /// Trait that connected IO resources implement.
 ///
 /// The goal for this trait is to allow users to implement
@@ -21,6 +23,11 @@ pub trait Connected {
     /// Return the set of connected peer TLS certificates.
     fn peer_certs(&self) -> Option<Vec<Certificate>> {
         None
+    }
+
+    /// Reference to what will have the set of connected peer TLS certificates after handshaking
+    fn peer_certs_global(&self) -> Arc<RwLock<Option<Vec<Certificate>>>>{
+        Arc::new(RwLock::new(None))
     }
 }
 
@@ -60,5 +67,9 @@ impl<T: Connected> Connected for TlsStream<T> {
         } else {
             None
         }
+    }
+
+    fn peer_certs_global(&self) -> Arc<RwLock<Option<Vec<Certificate>>>>{
+        self.get_peer_certificates_global()
     }
 }

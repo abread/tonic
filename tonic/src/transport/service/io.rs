@@ -3,6 +3,7 @@ use hyper::client::connect::{Connected as HyperConnected, Connection};
 use std::io;
 use std::net::SocketAddr;
 use std::pin::Pin;
+use std::sync::{Arc, RwLock};
 use std::task::{Context, Poll};
 use tokio::io::{AsyncRead, AsyncWrite};
 
@@ -76,6 +77,10 @@ impl Connected for ServerIo {
 
     fn peer_certs(&self) -> Option<Vec<Certificate>> {
         (&self.0).peer_certs()
+    }
+
+    fn peer_certs_global(&self) -> Arc<RwLock<Option<Vec<Certificate>>>> {
+        (&self.0).peer_certs_global()
     }
 }
 
