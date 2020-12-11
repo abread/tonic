@@ -102,7 +102,6 @@ impl<IO> TlsStream<IO> {
     }
 
     fn try_update_cert(&mut self) {
-        eprintln!("try update cert");
         let mut peer_certs_global = self.peer_certs.write()
             .expect("poisoned rwlock");
 
