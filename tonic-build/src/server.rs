@@ -156,6 +156,7 @@ fn generate_trait_methods<T: Service>(service: &T, proto_path: &str) -> TokenStr
 
                 quote! {
                     #stream_doc
+                    #[allow(non_camel_case_types)]
                     type #stream: Stream<Item = Result<#res_message, tonic::Status>> + Send + Sync + 'static;
 
                     #method_doc
@@ -172,6 +173,7 @@ fn generate_trait_methods<T: Service>(service: &T, proto_path: &str) -> TokenStr
 
                 quote! {
                     #stream_doc
+                    #[allow(non_camel_case_types)]
                     type #stream: Stream<Item = Result<#res_message, tonic::Status>> + Send + Sync + 'static;
 
                     #method_doc
