@@ -61,11 +61,11 @@ prost1 = { package = "prost", version = "0.6", optional = true }
 prost-derive = { version = "0.6", optional = true }
 
 # codegen
-async-trait = { version = "0.1.42", optional = true }
+async-trait = { version = "0.1", optional = true }
 
 # transport
-hyper = { version = "0.13.9", features = ["stream"], optional = true }
-tokio = { version = "0.2.23", features = ["tcp"], optional = true }
+hyper = { version = "0.13", features = ["stream"], optional = true }
+tokio = { version = "0.2", features = ["tcp"], optional = true }
 tower = { version = "0.3", optional = true}
 tower-make = { version = "0.3", features = ["connect"] }
 tower-balance =  { version = "0.3", optional = true }
